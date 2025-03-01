@@ -75,23 +75,23 @@ export const AssistantProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     console.log('Processing command:', lowerCommand);
     setTranscript(command);
     
-    // Navigation commands
-    if (lowerCommand.includes('physics') || lowerCommand.includes('physical')) {
+    // Navigation commands with improved partial matching
+    if (lowerCommand.includes('phy') || lowerCommand.includes('physics') || lowerCommand.includes('physical')) {
       navigate('/physics');
-    } else if (lowerCommand.includes('chemistry') || lowerCommand.includes('chemical')) {
+    } else if (lowerCommand.includes('chem') || lowerCommand.includes('chemistry') || lowerCommand.includes('chemical')) {
       navigate('/chemistry');
     } else if (lowerCommand.includes('math') || lowerCommand.includes('mathematics')) {
       navigate('/math');
-    } else if (lowerCommand.includes('computer') || lowerCommand.includes('science')) {
+    } else if (lowerCommand.includes('comp') || lowerCommand.includes('computer') || lowerCommand.includes('science')) {
       navigate('/computer-science');
-    } else if (lowerCommand.includes('biology') || lowerCommand.includes('biological')) {
+    } else if (lowerCommand.includes('bio') || lowerCommand.includes('biology') || lowerCommand.includes('biological')) {
       navigate('/biology');
-    } else if (lowerCommand.includes('home') || lowerCommand.includes('main page')) {
+    } else if (lowerCommand.includes('home') || lowerCommand.includes('main') || lowerCommand.includes('index')) {
       navigate('/');
     }
     
-    // Chapter navigation
-    if (lowerCommand.includes('chapter 1') || lowerCommand.includes('chapter one')) {
+    // Chapter navigation with improved partial matching
+    if (lowerCommand.includes('chapter 1') || lowerCommand.includes('chapter one') || lowerCommand.includes('first chapter')) {
       // Determine which subject's chapter 1 to navigate to based on current path
       const currentPath = window.location.pathname;
       if (currentPath.includes('physics')) {
