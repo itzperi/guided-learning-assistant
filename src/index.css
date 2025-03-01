@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -97,5 +98,102 @@
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Glass effect */
+.glass {
+  @apply bg-white/80 dark:bg-gray-900/80 backdrop-filter backdrop-blur-lg;
+}
+
+/* Shadow */
+.shadow-soft {
+  @apply shadow-md shadow-black/5 dark:shadow-black/20;
+}
+
+/* Utility class for transitions */
+.transition-all-200 {
+  @apply transition-all duration-200;
+}
+
+/* Voice wave animation */
+.voice-wave {
+  @apply h-2 w-1 mx-0.5 bg-blue-500 rounded-full;
+  animation: voice-wave 1s infinite ease-in-out;
+}
+
+.voice-wave:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.voice-wave:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.voice-wave:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+.voice-wave:nth-child(4) {
+  animation-delay: 0.3s;
+}
+
+.voice-wave:nth-child(5) {
+  animation-delay: 0.4s;
+}
+
+@keyframes voice-wave {
+  0%, 100% {
+    height: 8px;
+  }
+  50% {
+    height: 16px;
+  }
+}
+
+/* Pulse animation for assistant button */
+.assistant-pulse {
+  animation: assistant-pulse 2s infinite;
+}
+
+@keyframes assistant-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+  }
+}
+
+/* Fade in animation */
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Fade slide in animation */
+.fade-slide-in {
+  animation: fadeSlideIn 0.5s ease-out;
+}
+
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

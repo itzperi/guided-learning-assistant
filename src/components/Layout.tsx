@@ -1,149 +1,159 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Mic, MicOff, BookOpen, Atom, Beaker, Calculator, Computer, Leaf } from 'lucide-react';
-import { useAssistant } from '@/context/AssistantContext';
+import { Home, BookOpen, Menu, X, Moon, Sun, Atom, Calculator, Computer, Leaf, Beaker } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import VoiceAssistant from '@/components/VoiceAssistant';
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
-const Layout = ({ children }: LayoutProps) => {
+const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
-  const { listening, toggleListening, processCommand } = useAssistant();
-  const [recognitionActive, setRecognitionActive] = useState(false);
-  const [transcript, setTranscript] = useState('');
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [isDarkTheme, setIsDarkTheme] = useState(localStorage.getItem('theme') === 'dark');
   
-  // Set up speech recognition
-  useEffect(() => {
-    if (typeof window !== 'undefined' && 'webkitSpeechRecognition' in window) {
-      const SpeechRecognition = window.webkitSpeechRecognition;
-      const recognition = new SpeechRecognition();
-      
-      recognition.continuous = true;
-      recognition.interimResults = true;
-      
-      recognition.onstart = () => {
-        setRecognitionActive(true);
-      };
-      
-      recognition.onresult = (event) => {
-        const current = event.resultIndex;
-        const result = event.results[current];
-        const transcript = result[0].transcript;
-        setTranscript(transcript);
-        
-        if (result.isFinal) {
-          processCommand(transcript);
-          setTranscript('');
-        }
-      };
-      
-      recognition.onend = () => {
-        setRecognitionActive(false);
-        if (listening) {
-          recognition.start();
-        }
-      };
-      
-      recognition.onerror = (event) => {
-        console.error('Speech recognition error', event.error);
-        setRecognitionActive(false);
-      };
-      
-      if (listening && !recognitionActive) {
-        recognition.start();
-      } else if (!listening && recognitionActive) {
-        recognition.stop();
-      }
-      
-      return () => {
-        if (recognitionActive) {
-          recognition.stop();
-        }
-      };
-    }
-  }, [listening, recognitionActive, processCommand]);
-
-  const isActive = (path: string) => {
-    return location.pathname === path || location.pathname.startsWith(`${path}/`);
+  // Navigation items with icons
+  const navItems = [
+    { path: '/', label: 'Home', icon: <Home className="h-4 w-4" /> },
+    { path: '/physics', label: 'Physics', icon: <Atom className="h-4 w-4" /> },
+    { path: '/chemistry', label: 'Chemistry', icon: <Beaker className="h-4 w-4" /> },
+    { path: '/math', label: 'Math', icon: <Calculator className="h-4 w-4" /> },
+    { path: '/computer-science', label: 'Computer Science', icon: <Computer className="h-4 w-4" /> },
+    { path: '/biology', label: 'Biology', icon: <Leaf className="h-4 w-4" /> },
+  ];
+  
+  // Toggle dark theme
+  const toggleTheme = () => {
+    setIsDarkTheme(!isDarkTheme);
+    localStorage.setItem('theme', !isDarkTheme ? 'dark' : 'light');
+    document.documentElement.classList.toggle('dark', !isDarkTheme);
   };
 
+  // Set theme based on preference
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', isDarkTheme);
+  }, [isDarkTheme]);
+  
+  // Close menu when route changes
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [location.pathname]);
+  
+  const toggleMenu = () => setMenuOpen(!menuOpen);
+  
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="border-b border-white/10 backdrop-blur-lg bg-white/30 dark:bg-gray-900/30 sticky top-0 z-10">
-        <div className="container mx-auto py-3 px-4 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
-            <BookOpen className="h-6 w-6" />
-            <span className="font-bold text-lg">Learning Assistant</span>
-          </Link>
+    <div className={`flex min-h-screen flex-col ${isDarkTheme ? 'dark' : ''}`}>
+      {/* Header */}
+      <header className="sticky top-0 z-40 w-full glass border-b shadow-soft backdrop-blur-lg dark:bg-black/60">
+        <div className="container flex h-16 items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Link to="/" className="flex items-center gap-2">
+              <span className="font-bold text-xl bg-gradient-to-r from-primary to-blue-500 dark:from-blue-400 dark:to-purple-500 bg-clip-text text-transparent">OLabs</span>
+            </Link>
+          </div>
           
-          <nav className="hidden md:flex items-center space-x-6">
-            <Link to="/physics" className={`relative px-2 py-1 transition-all-200 ${isActive('/physics') ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}>
-              <span className="flex items-center gap-1.5">
-                <Atom className="h-4 w-4" />
-                Physics
-              </span>
-              {isActive('/physics') && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-primary rounded-full"></span>}
-            </Link>
-            
-            <Link to="/chemistry" className={`relative px-2 py-1 transition-all-200 ${isActive('/chemistry') ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}>
-              <span className="flex items-center gap-1.5">
-                <Beaker className="h-4 w-4" />
-                Chemistry
-              </span>
-              {isActive('/chemistry') && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-primary rounded-full"></span>}
-            </Link>
-            
-            <Link to="/math" className={`relative px-2 py-1 transition-all-200 ${isActive('/math') ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}>
-              <span className="flex items-center gap-1.5">
-                <Calculator className="h-4 w-4" />
-                Math
-              </span>
-              {isActive('/math') && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-primary rounded-full"></span>}
-            </Link>
-            
-            <Link to="/computer-science" className={`relative px-2 py-1 transition-all-200 ${isActive('/computer-science') ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}>
-              <span className="flex items-center gap-1.5">
-                <Computer className="h-4 w-4" />
-                Computer Science
-              </span>
-              {isActive('/computer-science') && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-primary rounded-full"></span>}
-            </Link>
-            
-            <Link to="/biology" className={`relative px-2 py-1 transition-all-200 ${isActive('/biology') ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}>
-              <span className="flex items-center gap-1.5">
-                <Leaf className="h-4 w-4" />
-                Biology
-              </span>
-              {isActive('/biology') && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-primary rounded-full"></span>}
-            </Link>
+          {/* Desktop navigation */}
+          <nav className="hidden md:flex items-center gap-6">
+            {navItems.map((item) => (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`flex items-center text-sm font-medium transition-all-200 hover:text-primary gap-1 ${
+                  location.pathname === item.path ? 'text-primary underline underline-offset-4' : 'text-muted-foreground'
+                }`}
+              >
+                {item.icon}
+                {item.label}
+              </Link>
+            ))}
           </nav>
           
-          <button
-            onClick={toggleListening}
-            className={`relative p-2 rounded-full transition-all duration-300 ${
-              listening ? 'bg-primary text-white' : 'bg-secondary text-muted-foreground hover:text-foreground'
-            }`}
-            aria-label={listening ? 'Stop listening' : 'Start listening'}
-          >
-            {listening ? <Mic className="h-5 w-5" /> : <MicOff className="h-5 w-5" />}
-            {transcript && (
-              <div className="absolute bottom-full mb-2 right-0 bg-white dark:bg-gray-900 p-2 rounded shadow-lg text-sm whitespace-nowrap">
-                {transcript}
-              </div>
-            )}
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Dark theme toggle */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleTheme}
+              className="rounded-full"
+              aria-label={isDarkTheme ? "Switch to light theme" : "Switch to dark theme"}
+            >
+              {isDarkTheme ? (
+                <Sun className="h-5 w-5 text-yellow-400" />
+              ) : (
+                <Moon className="h-5 w-5 text-slate-700" />
+              )}
+            </Button>
+            
+            {/* Mobile menu button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden"
+              onClick={toggleMenu}
+              aria-label={menuOpen ? "Close menu" : "Open menu"}
+            >
+              {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </Button>
+          </div>
         </div>
       </header>
       
-      <main className="flex-1 py-8 px-4 bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-950 transition-colors">
+      {/* Mobile navigation */}
+      {menuOpen && (
+        <div className="fixed inset-0 top-16 z-30 glass animate-fade-in md:hidden dark:bg-black/80 backdrop-blur-lg">
+          <nav className="container py-6 flex flex-col gap-4">
+            {navItems.map((item) => (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`flex items-center text-lg font-medium py-2 transition-all-200 hover:text-primary gap-2 ${
+                  location.pathname === item.path ? 'text-primary' : 'text-muted-foreground'
+                }`}
+              >
+                {item.icon}
+                {item.label}
+              </Link>
+            ))}
+            
+            {/* Dark theme toggle in mobile menu */}
+            <button 
+              onClick={toggleTheme}
+              className="flex items-center text-lg font-medium py-2 transition-all-200 hover:text-primary gap-2 text-muted-foreground"
+            >
+              {isDarkTheme ? (
+                <>
+                  <Sun className="h-5 w-5 text-yellow-400" />
+                  <span>Light Theme</span>
+                </>
+              ) : (
+                <>
+                  <Moon className="h-5 w-5" />
+                  <span>Dark Theme</span>
+                </>
+              )}
+            </button>
+          </nav>
+        </div>
+      )}
+      
+      {/* Main content */}
+      <main className="flex-1 container py-6 fade-slide-in">
         {children}
       </main>
       
-      <footer className="py-4 px-4 text-center text-sm text-muted-foreground border-t border-white/10 backdrop-blur-lg bg-white/30 dark:bg-gray-900/30">
-        <p>Learning Assistant &copy; {new Date().getFullYear()}</p>
+      {/* Footer */}
+      <footer className="w-full border-t py-6 dark:border-gray-800">
+        <div className="container flex flex-col items-center justify-center gap-2 text-center">
+          <p className="text-xs text-muted-foreground">
+            © {new Date().getFullYear()} OLabs. All rights reserved.
+          </p>
+        </div>
       </footer>
+      
+      {/* Voice assistant - always present */}
+      <VoiceAssistant />
     </div>
   );
 };

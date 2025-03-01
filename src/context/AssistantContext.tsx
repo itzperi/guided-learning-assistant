@@ -7,7 +7,10 @@ interface AssistantContextType {
   setListening: (listening: boolean) => void;
   toggleListening: () => void;
   speak: (text: string) => void;
+  stopSpeaking: () => void;
   processCommand: (command: string) => void;
+  transcript: string;
+  isSpeaking: boolean;
 }
 
 const AssistantContext = createContext<AssistantContextType | undefined>(undefined);
@@ -22,6 +25,9 @@ export const useAssistant = () => {
 
 export const AssistantProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [listening, setListening] = useState(false);
+  const [transcript, setTranscript] = useState('');
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [utterance, setUtterance] = useState<SpeechSynthesisUtterance | null>(null);
   const navigate = useNavigate();
 
   // Toggle listening state
@@ -32,8 +38,33 @@ export const AssistantProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   // Text-to-speech functionality
   const speak = useCallback((text: string) => {
     if ('speechSynthesis' in window) {
-      const utterance = new SpeechSynthesisUtterance(text);
-      window.speechSynthesis.speak(utterance);
+      // Cancel any ongoing speech
+      window.speechSynthesis.cancel();
+      
+      const newUtterance = new SpeechSynthesisUtterance(text);
+      setUtterance(newUtterance);
+      setIsSpeaking(true);
+      
+      newUtterance.onend = () => {
+        setIsSpeaking(false);
+        setUtterance(null);
+      };
+      
+      newUtterance.onerror = () => {
+        setIsSpeaking(false);
+        setUtterance(null);
+      };
+      
+      window.speechSynthesis.speak(newUtterance);
+    }
+  }, []);
+
+  // Stop speaking
+  const stopSpeaking = useCallback(() => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+      setUtterance(null);
     }
   }, []);
 
@@ -42,22 +73,25 @@ export const AssistantProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const lowerCommand = command.toLowerCase();
     
     console.log('Processing command:', lowerCommand);
+    setTranscript(command);
     
     // Navigation commands
-    if (lowerCommand.includes('physics')) {
+    if (lowerCommand.includes('physics') || lowerCommand.includes('physical')) {
       navigate('/physics');
-    } else if (lowerCommand.includes('chemistry')) {
+    } else if (lowerCommand.includes('chemistry') || lowerCommand.includes('chemical')) {
       navigate('/chemistry');
-    } else if (lowerCommand.includes('math')) {
+    } else if (lowerCommand.includes('math') || lowerCommand.includes('mathematics')) {
       navigate('/math');
     } else if (lowerCommand.includes('computer') || lowerCommand.includes('science')) {
       navigate('/computer-science');
-    } else if (lowerCommand.includes('biology')) {
+    } else if (lowerCommand.includes('biology') || lowerCommand.includes('biological')) {
       navigate('/biology');
+    } else if (lowerCommand.includes('home') || lowerCommand.includes('main page')) {
+      navigate('/');
     }
     
     // Chapter navigation
-    if (lowerCommand.includes('chapter 1')) {
+    if (lowerCommand.includes('chapter 1') || lowerCommand.includes('chapter one')) {
       // Determine which subject's chapter 1 to navigate to based on current path
       const currentPath = window.location.pathname;
       if (currentPath.includes('physics')) {
@@ -77,15 +111,97 @@ export const AssistantProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
     
     // Reading commands
-    if (lowerCommand.includes('read')) {
-      const readableContent = document.querySelectorAll('.content-readable');
-      let textToRead = '';
-      readableContent.forEach(element => {
-        textToRead += element.textContent + ' ';
-      });
-      speak(textToRead);
+    if (lowerCommand.includes('read') || lowerCommand.includes('speak')) {
+      // Try to use the global readContent function if it exists
+      // @ts-ignore - window.readPageContent might not exist
+      if (typeof window.readPageContent === 'function') {
+        // @ts-ignore
+        window.readPageContent();
+      } else {
+        // Fallback to manual reading
+        const readableContent = document.querySelectorAll('.content-readable');
+        let textToRead = '';
+        readableContent.forEach(element => {
+          textToRead += element.textContent + ' ';
+        });
+        
+        if (textToRead.trim()) {
+          speak(textToRead);
+        } else {
+          speak("No readable content found on this page.");
+        }
+      }
     }
-  }, [navigate, speak]);
+    
+    // Stop speaking command
+    if (lowerCommand.includes('stop') || lowerCommand.includes('pause') || lowerCommand.includes('quiet')) {
+      stopSpeaking();
+    }
+    
+    // Clear transcript after processing
+    setTimeout(() => {
+      setTranscript('');
+    }, 3000);
+  }, [navigate, speak, stopSpeaking]);
+
+  // Set up speech recognition
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'webkitSpeechRecognition' in window) {
+      const SpeechRecognition = window.webkitSpeechRecognition;
+      const recognition = new SpeechRecognition();
+      
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      
+      recognition.onresult = (event) => {
+        const current = event.resultIndex;
+        const result = event.results[current];
+        const transcriptText = result[0].transcript;
+        setTranscript(transcriptText);
+        
+        if (result.isFinal) {
+          processCommand(transcriptText);
+        }
+      };
+      
+      recognition.onend = () => {
+        if (listening) {
+          // Restart recognition if it ends but we're still supposed to be listening
+          recognition.start();
+        }
+      };
+      
+      recognition.onerror = (event) => {
+        console.error('Speech recognition error', event.error);
+        if (listening) {
+          // Try to restart on error
+          setTimeout(() => {
+            try {
+              recognition.start();
+            } catch (e) {
+              console.error('Failed to restart speech recognition', e);
+            }
+          }, 1000);
+        }
+      };
+      
+      if (listening) {
+        try {
+          recognition.start();
+        } catch (e) {
+          console.error('Error starting speech recognition', e);
+        }
+      }
+      
+      return () => {
+        try {
+          recognition.stop();
+        } catch (e) {
+          console.error('Error stopping speech recognition', e);
+        }
+      };
+    }
+  }, [listening, processCommand]);
 
   return (
     <AssistantContext.Provider
@@ -94,7 +210,10 @@ export const AssistantProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         setListening,
         toggleListening,
         speak,
-        processCommand
+        stopSpeaking,
+        processCommand,
+        transcript,
+        isSpeaking
       }}
     >
       {children}
