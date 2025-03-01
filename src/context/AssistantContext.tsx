@@ -147,6 +147,8 @@ export const AssistantProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   // Set up speech recognition
   useEffect(() => {
     if (typeof window !== 'undefined' && 'webkitSpeechRecognition' in window) {
+      // Fix for the constructor issue - we need to properly access the webkitSpeechRecognition
+      // @ts-ignore - webkitSpeechRecognition is not in the type definitions
       const SpeechRecognition = window.webkitSpeechRecognition;
       const recognition = new SpeechRecognition();
       
@@ -167,7 +169,11 @@ export const AssistantProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       recognition.onend = () => {
         if (listening) {
           // Restart recognition if it ends but we're still supposed to be listening
-          recognition.start();
+          try {
+            recognition.start();
+          } catch (e) {
+            console.error('Error restarting speech recognition', e);
+          }
         }
       };
       

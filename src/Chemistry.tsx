@@ -3,7 +3,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import ContentReader from '@/components/ContentReader';
-import { ArrowRight, Beaker, Flask, TestTube } from 'lucide-react';
+import { ArrowRight, Beaker, TestTube } from 'lucide-react';
 
 const Chemistry = () => {
   return (
