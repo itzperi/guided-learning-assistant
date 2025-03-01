@@ -76,17 +76,24 @@ export const AssistantProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setTranscript(command);
     
     // Navigation commands with improved partial matching
-    if (lowerCommand.includes('phy') || lowerCommand.includes('physics') || lowerCommand.includes('physical')) {
+    // Now also checking for "open" or "go to" prefixes
+    if (lowerCommand.includes('phy') || lowerCommand.includes('physics') || lowerCommand.includes('physical') || 
+        lowerCommand.includes('open phy') || lowerCommand.includes('go to phy')) {
       navigate('/physics');
-    } else if (lowerCommand.includes('chem') || lowerCommand.includes('chemistry') || lowerCommand.includes('chemical')) {
+    } else if (lowerCommand.includes('chem') || lowerCommand.includes('chemistry') || lowerCommand.includes('chemical') || 
+               lowerCommand.includes('open chem') || lowerCommand.includes('go to chem')) {
       navigate('/chemistry');
-    } else if (lowerCommand.includes('math') || lowerCommand.includes('mathematics')) {
+    } else if (lowerCommand.includes('math') || lowerCommand.includes('mathematics') || 
+               lowerCommand.includes('open math') || lowerCommand.includes('go to math')) {
       navigate('/math');
-    } else if (lowerCommand.includes('comp') || lowerCommand.includes('computer') || lowerCommand.includes('science')) {
+    } else if (lowerCommand.includes('comp') || lowerCommand.includes('computer') || lowerCommand.includes('science') || 
+               lowerCommand.includes('open comp') || lowerCommand.includes('go to comp')) {
       navigate('/computer-science');
-    } else if (lowerCommand.includes('bio') || lowerCommand.includes('biology') || lowerCommand.includes('biological')) {
+    } else if (lowerCommand.includes('bio') || lowerCommand.includes('biology') || lowerCommand.includes('biological') || 
+               lowerCommand.includes('open bio') || lowerCommand.includes('go to bio')) {
       navigate('/biology');
-    } else if (lowerCommand.includes('home') || lowerCommand.includes('main') || lowerCommand.includes('index')) {
+    } else if (lowerCommand.includes('home') || lowerCommand.includes('main') || lowerCommand.includes('index') || 
+               lowerCommand.includes('open home') || lowerCommand.includes('go to home')) {
       navigate('/');
     }
     
